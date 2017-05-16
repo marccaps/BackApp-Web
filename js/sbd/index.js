@@ -1,3 +1,8 @@
-$(document).ready(function(){
-    
+$(document).ready(function() {
+    testCookies();
+    setUser();
+
+    $("#logout").click(function() {
+        logout();
+    })
 });
