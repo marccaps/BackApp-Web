@@ -20,3 +20,6 @@ function logout() {
     document.cookie = "password=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
     window.location.href = "login.html";
 }
+
+//Globals
+var baseUrl = "http://192.168.5.241:5000/"

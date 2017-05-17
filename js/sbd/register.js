@@ -6,7 +6,7 @@ function signup() {
 
         $.ajax({
             type: "POST",
-            url: "http://127.0.0.1:5000/api/signup",
+            url: baseUrl + "api/signup",
             cache: false,
             contentType: "application/json; charset=utf-8",
             dataType: "json",
@@ -16,14 +16,15 @@ function signup() {
             },
             success: function (result) {
                 if (result.success == true) {
-                    document.cookie = "username=" + input["user"] + "; ";
-                    document.cookie = "password=" + input["password"] + "; ";
-                    window.location.href = "index.html";
+                    setSuccessful();
+                    setTimeout(function() {
+                        window.location.href = "login.html";
+                    }, 5000);
                 }
                 else {
                     //Error
                     clearFields();
-                    setError();
+                    setError("Server error: ");
                     return false;
                 }
                 return true;
@@ -42,10 +43,20 @@ function clearFields() {
 
 function setError(message) {
     //Añadimos alert antes del table
+    $(".alert").remove();
     var alert = new Object();
     alert["class"] = "alert alert-danger";
     alert["role"] = "alert";
     $("<div/>", alert).text(message).insertBefore("#target");
+}
+
+function setSuccessful() {
+    //Añadimos alert antes del table
+    $(".alert").remove();
+    var alert = new Object();
+    alert["class"] = "alert alert-success";
+    alert["role"] = "alert";
+    $("<div/>", alert).text("User registration successfully submitted.").insertBefore("#target");
 }
 
 $(document).ready(function(){

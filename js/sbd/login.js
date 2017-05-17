@@ -5,7 +5,7 @@ function authenticate() {
 
     $.ajax({
         type: "POST",
-        url: "http://127.0.0.1:5000/api/signin",
+        url: baseUrl + "api/signin",
         cache: false,
         contentType: "application/json; charset=utf-8",
         dataType: "json",
@@ -36,6 +36,7 @@ function clearFields() {
 
 function setError() {
     //Añadimos alert antes del table
+    $(".alert").remove();
     var alert = new Object();
     alert["class"] = "alert alert-danger";
     alert["role"] = "alert";
