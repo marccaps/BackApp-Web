@@ -35,6 +35,7 @@ function setFilesPage(result) {
             a["class"] = "thumbnail";
             a["href"] = "#";
             a["data-url"] = baseUrl + "api/" + readCookie("username") + "/" + key;
+            a["data-filename"] = key;
             var img = {};
             img["class"] = "img-responsive";
             img["width"] = 150;
@@ -52,7 +53,7 @@ function setFilesPage(result) {
         }
     }
     $("a[data-url]").click(function(){
-        downloadUrlApi($(this).data("url"));
+        downloadUrlApi($(this).data("filename"), $(this).data("url"));
     });
 }
 
@@ -96,11 +97,13 @@ function uploadUrlApi() {
     });
 }
 
-function downloadUrlApi(url) {
+function downloadUrlApi(filename, url) {
     var username = readCookie("username");
     var password = readCookie("password");
+    var header = "Basic " + btoa(username + ":" + password);
+    document.cookie = "Authorization=" + header;
 
-    $.fileDownload(url, {
+    /*$.fileDownload(url, {
         httpMethod: "GET",
         beforeSend: function (xhr) {
             xhr.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
@@ -112,7 +115,49 @@ function downloadUrlApi(url) {
             //Fail
             setError("Error downloading url: " + url);
         }
+    });*/
+
+    var req = ic.ajax.raw({
+        type: 'GET',
+        url: url,
+        beforeSend: function (request) {
+            request.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
+            request.setRequestHeader('Access-Control-Allow-Headers', '*');
+            request.setRequestHeader('Access-Control-Allow-Origin', '*');
+        },
+        processData: false
     });
+
+    var maxSizeForBase64 = 1048576; //1024 * 1024
+
+    req.then(
+        function resolve(result) {
+            var str = result.response;
+
+            var anchor = $('#hidden-anchor');
+            var windowUrl = window.URL || window.webkitURL;
+            if (str.length > maxSizeForBase64 && typeof windowUrl.createObjectURL === 'function') {
+                var blob = new Blob([result.response], { type: "application/octet-stream" });
+                var url = windowUrl.createObjectURL(blob);
+                anchor.prop('href', url);
+                anchor.prop('download', filename);
+                anchor.get(0).click();
+                windowUrl.revokeObjectURL(url);
+            }
+            else {
+                //use base64 encoding when less than set limit or file API is not available
+                anchor.attr({
+                    href: 'data:text/plain;base64,'+ b64EncodeUnicode(result.response),
+                    download: filename,
+                });
+                anchor.get(0).click();
+            }
+
+        }.bind(this),
+        function reject(err) {
+            console.log(err);
+        }
+    );
     
 }
 
