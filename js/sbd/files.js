@@ -38,14 +38,14 @@ function setFilesPage(result) {
             var img = {};
             img["class"] = "img-responsive";
             img["width"] = 150;
-            img["height"] = 100;
+            img["height"] = 150;
             img["src"]="PDF.png";
 
             $("#div-files").append(
                 $('<div/>', div).append(
                     $('<a/>', a).append(
-                        $('<img/>', img).append()),
-                        $('<h1/>').text(key).append()
+                        $('<img/>', img).append(),
+                        $('<h1/>').text(key).append())
                 )
             );
 
@@ -56,57 +56,73 @@ function setFilesPage(result) {
     });
 }
 
+function uploadUrlApi() {
+    var username = readCookie("username");
+    var password = readCookie("password");
+
+    $.ajax({
+        // Your server script to process the upload
+        url: baseUrl + "api/" + username + "/upload_file",
+        type: 'POST',
+
+        // Form data
+        data: new FormData($('upload-form')[0]),
+
+        // Tell jQuery not to process data or worry about content-type
+        // You *must* include these options!
+        cache: false,
+        contentType: false,
+        processData: false,
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
+        },
+
+        // Custom XMLHttpRequest
+        xhr: function() {
+            var myXhr = $.ajaxSettings.xhr();
+            if (myXhr.upload) {
+                // For handling the progress of the upload
+                myXhr.upload.addEventListener('progress', function(e) {
+                    if (e.lengthComputable) {
+                        $('#upload-modal progress').attr({
+                            value: e.loaded,
+                            max: e.total,
+                        });
+                    }
+                } , false);
+            }
+            return myXhr;
+        },
+    });
+}
+
 function downloadUrlApi(url) {
     var username = readCookie("username");
     var password = readCookie("password");
 
-
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', url, true);
-    xhr.responseType = 'arraybuffer';
-    xhr.withCredentials = 'true';
-    xhr.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
-    xhr.onload = function () {
-        if (this.status === 200) {
-            var filename = "";
-            var disposition = xhr.getResponseHeader('Content-Disposition');
-            if (disposition && disposition.indexOf('attachment') !== -1) {
-                var filenameRegex = /filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/;
-                var matches = filenameRegex.exec(disposition);
-                if (matches != null && matches[1]) filename = matches[1].replace(/['"]/g, '');
-            }
-            var type = xhr.getResponseHeader('Content-Type');
-
-            var blob = new Blob([this.response], { type: type });
-            if (typeof window.navigator.msSaveBlob !== 'undefined') {
-                // IE workaround for "HTML7007: One or more blob URLs were revoked by closing the blob for which they were created. These URLs will no longer resolve as the data backing the URL has been freed."
-                window.navigator.msSaveBlob(blob, filename);
-            } else {
-                var URL = window.URL || window.webkitURL;
-                var downloadUrl = URL.createObjectURL(blob);
-
-                if (filename) {
-                    // use HTML5 a[download] attribute to specify filename
-                    var a = document.createElement("a");
-                    // safari doesn't support this yet
-                    if (typeof a.download === 'undefined') {
-                        window.location = downloadUrl;
-                    } else {
-                        a.href = downloadUrl;
-                        a.download = filename;
-                        document.body.appendChild(a);
-                        a.click();
-                    }
-                } else {
-                    window.location = downloadUrl;
-                }
-
-                setTimeout(function () { URL.revokeObjectURL(downloadUrl); }, 100); // cleanup
-            }
+    $.fileDownload(url, {
+        httpMethod: "GET",
+        beforeSend: function (xhr) {
+            xhr.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
+        },
+        successCallback: function(url) {
+            //Success
+        },
+        failCallback: function (html, url) {
+            //Fail
+            setError("Error downloading url: " + url);
         }
-    };
-    xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-    xhr.send();
+    });
+    
+}
+
+function setError(message) {
+    //Añadimos alert antes del table
+    $(".alert").remove();
+    var alert = new Object();
+    alert["class"] = "alert alert-danger";
+    alert["role"] = "alert";
+    $("#div-errors").append($("<div/>", alert).text(message));
 }
 
 $(document).ready(function() {
@@ -117,4 +133,7 @@ $(document).ready(function() {
     $("#logout").click(function() {
         logout();
     })
+    $("#upload-button").click(function(){
+        uploadUrlApi();
+    });
 });
