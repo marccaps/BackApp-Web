@@ -34,7 +34,7 @@ function setFilesPage(result) {
             var a = {};
             a["class"] = "thumbnail";
             a["href"] = "#";
-            a["data-url"] = baseUrl + "api/" + readCookie("username") + "/" + key;
+            a["data-url"] = baseUrl + "api/" + readCookie("username") + "/" + key + "/tokenizer";
             a["data-filename"] = key;
             var img = {};
             img["class"] = "img-responsive";
@@ -53,7 +53,7 @@ function setFilesPage(result) {
         }
     }
     $("a[data-url]").click(function(){
-        downloadUrlApi($(this).data("filename"), $(this).data("url"));
+        getDownloadToken($(this).data("filename"), $(this).data("url"));
     });
 }
 
@@ -67,7 +67,7 @@ function uploadUrlApi() {
         type: 'POST',
 
         // Form data
-        data: new FormData($('upload-form')[0]),
+        data: new FormData($('upload-form :file')),
 
         // Tell jQuery not to process data or worry about content-type
         // You *must* include these options!
@@ -94,71 +94,42 @@ function uploadUrlApi() {
             }
             return myXhr;
         },
+        success: function (result) {
+            alert("blabla");
+        }
     });
 }
 
-function downloadUrlApi(filename, url) {
+function downloadFileToken(filename, token) {
+    var username = readCookie("username");
+    window.location = baseUrl + "api/download/token/" + token;
+}
+
+function getDownloadToken(filename, url) {
     var username = readCookie("username");
     var password = readCookie("password");
-    var header = "Basic " + btoa(username + ":" + password);
-    document.cookie = "Authorization=" + header;
-
-    /*$.fileDownload(url, {
-        httpMethod: "GET",
+    $.ajax({
+        type: "GET",
+        url: url,
+        cache: false,
+        contentType: "application/json; charset=utf-8",
         beforeSend: function (xhr) {
             xhr.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
         },
-        successCallback: function(url) {
-            //Success
+        error: function () {
+            return false;
         },
-        failCallback: function (html, url) {
-            //Fail
-            setError("Error downloading url: " + url);
-        }
-    });*/
-
-    var req = ic.ajax.raw({
-        type: 'GET',
-        url: url,
-        beforeSend: function (request) {
-            request.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
-            request.setRequestHeader('Access-Control-Allow-Headers', '*');
-            request.setRequestHeader('Access-Control-Allow-Origin', '*');
-        },
-        processData: false
-    });
-
-    var maxSizeForBase64 = 1048576; //1024 * 1024
-
-    req.then(
-        function resolve(result) {
-            var str = result.response;
-
-            var anchor = $('#hidden-anchor');
-            var windowUrl = window.URL || window.webkitURL;
-            if (str.length > maxSizeForBase64 && typeof windowUrl.createObjectURL === 'function') {
-                var blob = new Blob([result.response], { type: "application/octet-stream" });
-                var url = windowUrl.createObjectURL(blob);
-                anchor.prop('href', url);
-                anchor.prop('download', filename);
-                anchor.get(0).click();
-                windowUrl.revokeObjectURL(url);
+        success: function (result) {
+            if (result.success == true) {
+                downloadFileToken(filename, result.token);
             }
             else {
-                //use base64 encoding when less than set limit or file API is not available
-                anchor.attr({
-                    href: 'data:text/plain;base64,'+ b64EncodeUnicode(result.response),
-                    download: filename,
-                });
-                anchor.get(0).click();
+                //Error
+                setError("Error downloading file: " + filename);
             }
-
-        }.bind(this),
-        function reject(err) {
-            console.log(err);
+            return false;
         }
-    );
-    
+    });
 }
 
 function setError(message) {
@@ -167,7 +138,7 @@ function setError(message) {
     var alert = new Object();
     alert["class"] = "alert alert-danger";
     alert["role"] = "alert";
-    $("#div-errors").append($("<div/>", alert).text(message));
+    $("#div-notifications").append($("<div/>", alert).text(message));
 }
 
 $(document).ready(function() {
