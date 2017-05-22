@@ -60,44 +60,43 @@ function setFilesPage(result) {
 function uploadUrlApi() {
     var username = readCookie("username");
     var password = readCookie("password");
+    //var fd = new FormData($('#upload-form'));
+    var fd = new FormData();
+    //fd.append('file', $('upload-form :file'))
+    //fd.append("file", $('#upload-form :file').val());
+    var filename = $('#upload-form :file')[0].files[0].name;
+    var data = {'filename': filename};
 
     $.ajax({
         // Your server script to process the upload
         url: baseUrl + "api/" + username + "/upload_file",
         type: 'POST',
-
         // Form data
-        data: new FormData($('upload-form :file')),
-
+        data: JSON.stringify(data),
         // Tell jQuery not to process data or worry about content-type
-        // You *must* include these options!
+        // You must include these options!
         cache: false,
-        contentType: false,
-        processData: false,
+        contentType: "application/json; charset=utf-8",
+        dataType: "json",
         beforeSend: function (xhr) {
-            xhr.setRequestHeader ("Authorization", "Basic " + btoa(username + ":" + password));
-        },
-
-        // Custom XMLHttpRequest
-        xhr: function() {
-            var myXhr = $.ajaxSettings.xhr();
-            if (myXhr.upload) {
-                // For handling the progress of the upload
-                myXhr.upload.addEventListener('progress', function(e) {
-                    if (e.lengthComputable) {
-                        $('#upload-modal progress').attr({
-                            value: e.loaded,
-                            max: e.total,
-                        });
-                    }
-                } , false);
-            }
-            return myXhr;
+            xhr.setRequestHeader("Authorization", "Basic " + btoa(username + ":" + password));
         },
         success: function (result) {
-            alert("blabla");
+            
         }
     });
+}
+
+function myProgress() {
+    var num = Math.random() * 10; 
+    valuer = parseInt($('.progress-bar').attr('aria-valuenow'));
+    if (valuer >= 100) {
+        clearInterval(interval);
+        return true;
+    }
+    newVal = valuer + num;
+    $('.progress-bar').css("width", newVal+'%').attr('aria-valuenow', newVal);
+    
 }
 
 function downloadFileToken(filename, token) {
@@ -141,6 +140,8 @@ function setError(message) {
     $("#div-notifications").append($("<div/>", alert).text(message));
 }
 
+var interval;
+
 $(document).ready(function() {
     testCookies();
     setUser();
@@ -150,6 +151,7 @@ $(document).ready(function() {
         logout();
     })
     $("#upload-button").click(function(){
+        interval = setInterval(function(){ myProgress() }, 500);
         uploadUrlApi();
     });
 });

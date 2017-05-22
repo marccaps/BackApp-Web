@@ -9,7 +9,7 @@
     <meta name="description" content="">
     <meta name="author" content="">
 
-    <title>SB Admin - Bootstrap Admin Template</title>
+    <title>SB Admin - Files</title>
 
     <!-- Bootstrap Core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
@@ -44,10 +44,13 @@
         <div class="modal-body">
             <p>Upload file:</p>
             <form id="upload-form" enctype="multipart/form-data">
-                <input name="file" type="file" />
+                <input id="file-input" name="file" type="file" />
                 <input type="button" class="btn btn-default" id="upload-button" value="Upload"/>
             </form>
-            <progress></progress>
+            <div class="progress">
+                <div class="progress-bar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width:0%">
+                </div>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>

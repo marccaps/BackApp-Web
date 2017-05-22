@@ -36,4 +36,5 @@ function logout() {
 }
 
 //Globals
+//var baseUrl = "http://192.168.5.3:5001/"
 var baseUrl = "http://192.168.5.241:5000/"
